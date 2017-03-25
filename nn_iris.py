@@ -47,6 +47,10 @@ y_ = tf.placeholder("float", [None, 3])  # labels
 W1 = tf.Variable(np.float32(np.random.rand(4, 5)) * 0.1)
 b1 = tf.Variable(np.float32(np.random.rand(5)) * 0.1)
 
+#OPT ANOTHER NN LAYER
+W1h = tf.Variable(np.float32(np.random.rand(5, 5)) * 0.1)
+b1h = tf.Variable(np.float32(np.random.rand(5)) * 0.1)
+
 # inner nn layer -> outter nn layer
 
 # 5 entries and 3 neurons
@@ -54,9 +58,10 @@ W2 = tf.Variable(np.float32(np.random.rand(5, 3)) * 0.1)
 b2 = tf.Variable(np.float32(np.random.rand(3)) * 0.1)
 
 # outter nn layer -> output
-h = tf.nn.sigmoid(tf.matmul(x, W1) + b1)
-# h = tf.matmul(x, W1) + b1  # Try this!
-y = tf.nn.softmax(tf.matmul(h, W2) + b2)
+#h = tf.nn.sigmoid(tf.matmul(x, W1) + b1)
+h = tf.matmul(x, W1) + b1  # Try this!
+h2 = tf.matmul(h, W1h) + b1h
+y = tf.nn.softmax(tf.matmul(h2, W2) + b2)
 
 loss = tf.reduce_sum(tf.square(y_ - y))
 
@@ -73,28 +78,30 @@ print "----------------------"
 
 batch_size = 20
 
-if __name__ == '__main__':
-    for epoch in xrange(100):
-        for jj in xrange(len(x_data_train) / batch_size):
-            # Training zone
-            batch_xs = x_data[jj * batch_size: jj * batch_size + batch_size]
-            batch_ys = y_data[jj * batch_size: jj * batch_size + batch_size]
-            sess.run(train, feed_dict={x: x_data_train, y_: y_data_train})
-            # End of training zone
+for epoch in xrange(150):
+    for jj in xrange(len(x_data_train) / batch_size):
+        # Training zone
+        batch_xs = x_data_train[jj * batch_size: jj * batch_size + batch_size]
+        batch_ys = y_data_train[jj * batch_size: jj * batch_size + batch_size]
+        sess.run(train, feed_dict={x: batch_xs, y_: batch_ys})
+        # End of training zone
 
-        # Validation zone
-        print "Epoch #:", epoch, "Error: ", sess.run(loss, feed_dict={x: x_data_valid, y_: y_data_valid})
-        result = sess.run(y, feed_dict={x: x_data_valid})
-        for b, r in zip(y_data_valid, result):
-            print b, "-->", r
-        print "----------------------------------------------------------------------------------"
-        # End of validation zone
-
-    # Once we are done validating our nn we test it using the other array counting how many errors it makes.
-    error = 0
-    for b, r in zip(y_data_test, result):
-        if np.argmax(b) != np.argmax(r):
-            error += 1
-        print b, "-->", r
+    # Validation zone
+    print "Epoch #:", epoch, "Error: ", sess.run(loss, feed_dict={x: x_data_valid, y_: y_data_valid})
+    result = sess.run(y, feed_dict={x: x_data_valid})
+    #for b, r in zip(y_data_valid, result):
+    #    print b, "-->", r
     print "----------------------------------------------------------------------------------"
-    print "Error:", error
+    # End of validation zone
+
+# Once we are done validating our nn we test it using the other array counting how many errors it makes.
+error = 0
+
+# We finally test our nn using the test dataset and compare it with the real results
+result = sess.run(y, feed_dict={x: x_data_test})
+for b, r in zip(y_data_test, result):
+    if np.argmax(b) != np.argmax(r):
+        error += 1
+    print b, "-->", r
+print "----------------------------------------------------------------------------------"
+print "Error:", error
